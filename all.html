@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <title>Book-store</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+
+<body>
+  <header>
+    <nav class="flex items-center justify-between flex-wrap bg-orange-700 p-6">
+      <div class="flex items-center flex-shrink-0 text-white mr-6">
+        <span class="font-semibold text-xl tracking-tight">Book Store</span>
+      </div>
+      <div class="block lg:hidden">
+        <button class="flex items-center px-3 py-2 border rounded text-teal-200 border-teal-400 hover:text-white hover:border-white">
+          <svg class="fill-current h-3 w-3" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+            <title>Menu</title>
+            <path d="M0 3h20v2H0V3zm0 6h20v2H0V9zm0 6h20v2H0v-2z" />
+          </svg>
+        </button>
+      </div>
+    </nav>
+  </header>
+  <main>
+    <div class="question-container mx-9 mt-5 rounded-lg px-9 bg-slate-950">
+      <div class="heading text-red-500">Fetch Books API</div>
+      <div class="text-sky-400 mb-5 mt-2">
+        Develop a Web Application that uses AJAX to fetch JSON data from a remote server and displays it on a web page.
+      </div>
+      <button class="bg-slate-100 mb-5 p-2 text-sky-800" id="fetchButton" onclick="dont_dothis()">Fetch Data</button>
+
+      <div id="drop" hidden="true" class="mb-5 p-2">
+        <label for="sort_by" class="text-sky-600">Sort by:</label>
+        <select id="sort_by" onchange="sort_it_out()">
+          <option value="Rank">Rank</option>
+          <option value="Alphabets">Alphabet</option>
+        </select>
+      </div>
+
+      <div id="drop2" hidden="true" class="mb-5 p-2">
+        <label for="filter_it" class="text-sky-600">Filter by:</label>
+        <select id="filter_it" onchange="filter_it_out()">
+          <option value="none">None</option>
+          <option value="above_499">Above 499rs</option>
+          <option value="below_500">Below 500</option>
+        </select>
+      </div>
+
+      <div id="con-2" class="px-14 gap-y-4"></div>
+
+      <div id="pagination" hidden="true" class="mt-5 flex justify-between">
+        <button id="prevButton" class="bg-gray-300 p-2 rounded" onclick="prevPage()">Previous</button>
+        <button id="nextButton" class="bg-gray-300 p-2 rounded" onclick="nextPage()">Next</button>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    let data = []; 
+    let all = []
+    let currentPage = 1;
+    const itemsPerPage = 8;
+
+    function init_data(n) {
+      for (let i = 0; i < n; i++) {
+        data[i] = [];
+      }
+    }
+
+    function dont_dothis() {
+      const baseURL1 = "books.json";
+
+      fetch(baseURL1)
+        .then(res => res.json())
+        .then(res => {
+          console.log(res);
+
+          init_data(res.num_results);
+
+          for (let i = 0; i < res.num_results; i++) {
+            data[i][0] = res.results.books[i].book_image;
+            data[i][1] = res.results.books[i].title;
+            data[i][2] = res.results.books[i].rank;
+            data[i][3] = Math.floor(Math.random() * 1000);
+          }
+          all = data;
+
+          renderPage(currentPage);
+
+          document.getElementById("fetchButton").hidden = true;
+        })
+        .catch(error => {
+          console.error("Error fetching data:", error);
+        });
+    }
+
+    function renderPage(page) {
+      const start = (page - 1) * itemsPerPage;
+      const end = start + itemsPerPage;
+
+      let str = "<div class='grid grid-cols-4 grid-flow-row gap-4'>";
+      for (let i = start; i < end && i < data.length; i++) {
+        str += "<div class='box-border m-2 flex flex-col items-center justify-center'>";
+        str += "<img class='h-38 w-32' src='" + data[i][0] + "' alt='Book Image'></img>";
+        str += "<h3 class='text-white'>" + data[i][1] + "</h3>";
+        str += "</div>";
+      }
+      str += "</div>";
+
+      document.getElementById("con-2").innerHTML = str;
+
+      document.getElementById("prevButton").disabled = currentPage === 1;
+      document.getElementById("nextButton").disabled = end >= data.length;
+    }
+
+    function nextPage() {
+      if (currentPage * itemsPerPage < data.length) {
+        currentPage++;
+        renderPage(currentPage);
+      }
+    }
+
+    function prevPage() {
+      if (currentPage > 1) {
+        currentPage--;
+        renderPage(currentPage);
+      }
+    }
+
+    function sort_it_out() {
+      const sort_it = document.getElementById("sort_by").value;
+      if (sort_it == "Alphabets") {
+        data.sort((a, b) => a[1].localeCompare(b[1]));
+      } else {
+        data.sort((a, b) => a[2] - b[2]);
+      }
+      currentPage = 1;
+      renderPage(currentPage);
+    }
+
+    function filter_it_out() {
+      const price = document.getElementById("filter_it").value;
+      let filteredData = [];
+
+      if (price === "above_499") {
+        filteredData = data.filter(book => book[3] >= 500);
+      } else if (price === "below_500") {
+        filteredData = data.filter(book => book[3] < 500);
+     
+    } else {
+        filteredData = data.slice(); 
+      }
+
+      currentPage = 1;
+      data = filteredData; 
+      if(data == [])
+      {
+        data = all
+      }
+      renderPage(currentPage);
+    }
+  </script>
+</body>
+
+</html>
